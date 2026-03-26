@@ -1,9 +1,8 @@
 import bcrypt from "bcrypt";
-import { Schema } from "mongoose";
-import { Videos } from "./videos.model.js";
+import mongoose, { Schema } from "mongoose";
 import jwt from "jsonwebtoken";
 
-const Users = new Schema(
+const userSchema = new Schema(
   {
     username: {
       type: String,
@@ -17,11 +16,13 @@ const Users = new Schema(
       type: String,
       required: true,
     },
-    avatar: {
+    profileimage: {
       type: String,
+      default: ""
     },
     coverimage: {
       type: String,
+      default: ""
     },
     password: {
       type: String,
@@ -32,7 +33,7 @@ const Users = new Schema(
     },
     watchHistory: {
       type: Schema.Types.ObjectId,
-      ref: Videos,
+      ref: "Videos",
     },
   },
   {
@@ -40,17 +41,17 @@ const Users = new Schema(
   }
 );
 
-Users.pre("save", async function () {
+userSchema.pre("save", async function () {
   if (!this.isModified("password"))   return;
 
   this.password = await bcrypt.hash(this.password, 10);
 });
 
-Users.methods.isPasswordCorrect = async function (password) {
+userSchema.methods.isPasswordCorrect = async function (password) {
   return await bcrypt.compare(this.password, password);
 };
 
-Users.methods.accessToken = function () {
+userSchema.methods.accessToken = function () {
   return jwt.sign(
     {
       id: this._id,
@@ -62,7 +63,7 @@ Users.methods.accessToken = function () {
   );
 };
 
-Users.methods.refreshToken = function () {
+userSchema.methods.refreshToken = function () {
   return jwt.sign(
     {
       id: this._id,
@@ -72,4 +73,4 @@ Users.methods.refreshToken = function () {
   );
 };
 
-export { Users };
+export const Users = mongoose.model('Users', userSchema);

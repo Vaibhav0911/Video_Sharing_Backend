@@ -1,7 +1,6 @@
-import { Schema } from "mongoose";
-import { Users } from "./users.model.js";
+import mongoose, { Schema } from "mongoose";
 
-const Videos = new Schema(
+const videoSchema = new Schema(
   {
     videofile: {
       type: String,
@@ -32,7 +31,7 @@ const Videos = new Schema(
     },
     owner: {
       type: Schema.Types.ObjectId,
-      ref: Users,
+      ref: "Users"
     },
   },
   {
@@ -40,4 +39,4 @@ const Videos = new Schema(
   }
 );
 
-export { Videos };
+export const Videos = mongoose.model("Videos", videoSchema);
