@@ -7,7 +7,9 @@ import {
   userLogout,
   refreshAccessToken,
   updateProfileImage,
-  updateCoverImage 
+  updateCoverImage,
+  getUserChannelProfile,
+  userWatchHistory, 
 } from "../controllers/user.controller.js";
 
 const router = Router();
@@ -45,6 +47,16 @@ router.route("/update-cover-image").post(
   jwtverify,
   Upload.single("coverimage"),
   updateCoverImage
+)
+
+router.route("/channel-profile").get(
+  jwtverify,
+  getUserChannelProfile
+)
+
+router.route("/watch-history").get(
+  jwtverify,
+  userWatchHistory
 )
 
 export default router;

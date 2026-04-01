@@ -20,7 +20,15 @@ const userSchema = new Schema(
       type: String,
       default: ""
     },
+    profileimageid:{
+      type: String,
+      default: ""
+    },
     coverimage: {
+      type: String,
+      default: ""
+    },
+    coverimageid: {
       type: String,
       default: ""
     },
@@ -32,10 +40,18 @@ const userSchema = new Schema(
       type: String,
       default: ""
     },
-    watchHistory: {
-      type: Schema.Types.ObjectId,
-      ref: "Videos",
-    },
+    watchHistory: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Videos",
+      }
+    ],
+    myVideos: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Videos",
+      }
+    ],
   },
   {
     timestamps: true,
