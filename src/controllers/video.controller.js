@@ -23,7 +23,7 @@ const deleteFileFromLocal = async (filePath) => {
 };
 
 const uploadVideo = AsyncHandler(async (req, res) => {
-  if (!req.user?._id) throw new Error("Unauthorized");
+  if (!req.user?._id) throw new ApiError(400, "Unauthorized");
 
   const { title, description, isPublised } = req.body;
 
@@ -33,7 +33,7 @@ const uploadVideo = AsyncHandler(async (req, res) => {
   const localVideoFilePath = req.files?.videofile?.[0]?.path || "";
   const localThumbnailPath = req.files?.thumbnail?.[0]?.path || "";
 
-  console.log(req.files);
+  // console.log(req.files);
 
   if (!localVideoFilePath) throw new ApiError(400, "No videofile uploaded");
   if (!localThumbnailPath) throw new ApiError(400, "No Thumbnail uploaded");
@@ -50,8 +50,8 @@ const uploadVideo = AsyncHandler(async (req, res) => {
     "thumbnails"
   );
 
-  console.log(VideoFile);
-  console.log(Thumbnail);
+  // console.log(VideoFile);
+  // console.log(Thumbnail);
 
   deleteFileFromLocal(localVideoFilePath);
   deleteFileFromLocal(localThumbnailPath);
@@ -79,4 +79,33 @@ const uploadVideo = AsyncHandler(async (req, res) => {
   res.status(200).json(new ApiResponse(200, "Video uploaded successfully", {video, user}));
 });
 
-export { uploadVideo };
+const getVideo = AsyncHandler(async(req, res) => {
+  if (!req.user?._id)     throw new ApiError(400, "Unauthorized");
+
+  const {videoId, slug} = req.params;
+
+  const video = Videos.findOne({videoId});
+
+  if(!video)              throw new ApiError(400, "Video not Found!"); 
+
+  if(slug !== video.slug){
+      return res.redirect(301, `/api/v1/video/${video.videoId}/${video.slug}`);
+  }
+
+  return res.status(200).json(new ApiResponse(200, "Successfully get video", video));
+})
+
+// const editVideo = AsyncHandler(async(req, res) => {
+
+//   if (!req.user?._id)     throw new ApiError(400, "Unauthorized");
+
+//   const { title, description, isPublised } = req.body;
+
+//   const localThumbnailPath = req.file?.path;
+
+//   if(!localThumbnailPath)         throw new ApiError("Thumbnail is required!");
+
+
+// })
+
+export { uploadVideo, getVideo };

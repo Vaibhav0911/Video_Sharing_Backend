@@ -50,7 +50,7 @@ router.route("/update-cover-image").post(
   updateCoverImage
 )
 
-router.route("/channel-profile").get(
+router.route("/channel-profile/:username").get(
   jwtverify,
   getUserChannelProfile
 )
@@ -60,7 +60,7 @@ router.route("/watch-history").get(
   userWatchHistory
 )
 
-router.route("/videos").get(
+router.route("/:username/videos").get(
   jwtverify,
   getUserVideos
 )

@@ -1,4 +1,5 @@
 import mongoose, { Schema } from "mongoose";
+import { nanoid } from "nanoid";
 
 const videoSchema = new Schema(
   {
@@ -7,14 +8,14 @@ const videoSchema = new Schema(
       required: true,
     },
     videofileId: {
-      type: String
+      type: String,
     },
     thumbnail: {
       type: String,
       required: true,
     },
     thumbnailId: {
-      type: String
+      type: String,
     },
     title: {
       type: String,
@@ -27,6 +28,18 @@ const videoSchema = new Schema(
       type: String,
       required: true,
     },
+    videoId: {
+      // Clean public ID
+      type: String,
+      unique: true,
+      index: true,
+    },
+    slug: {
+      // SEO slug
+      type: String,
+      unique: true,
+      index: true,
+    },
     views: {
       type: Number,
       default: 0,
@@ -37,12 +50,30 @@ const videoSchema = new Schema(
     },
     owner: {
       type: Schema.Types.ObjectId,
-      ref: "Users"
+      ref: "Users",
     },
   },
   {
     timestamps: true,
   }
 );
+
+videoSchema.pre("save", async function (next) {
+  if (!this.videoId) this.videoId = `vid_${nanoid(8)}`;
+
+  if (this.isModified("title")) {
+    const baseSlug = slugify(this.title, {
+      lower: true,
+      strict: true,
+    });
+
+    const existing = mongoose.model.Videos.findOne({
+      slug: baseSlug,
+    });
+
+    this.slug = existing ? `${baseSlug}-${nanoid(4)}` : baseSlug;
+  }
+  next();
+});
 
 export const Videos = mongoose.model("Videos", videoSchema);
