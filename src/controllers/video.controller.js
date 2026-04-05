@@ -76,36 +76,105 @@ const uploadVideo = AsyncHandler(async (req, res) => {
     { new: true }
   );
 
-  res.status(200).json(new ApiResponse(200, "Video uploaded successfully", {video, user}));
+  res
+    .status(200)
+    .json(new ApiResponse(200, "Video uploaded successfully", { video, user }));
 });
 
-const getVideo = AsyncHandler(async(req, res) => {
-  if (!req.user?._id)     throw new ApiError(400, "Unauthorized");
+const getVideo = AsyncHandler(async (req, res) => {
+  if (!req.user?._id) throw new ApiError(400, "Unauthorized");
 
-  const {videoId, slug} = req.params;
+  const { videoId, slug } = req.params;
 
-  const video = Videos.findOne({videoId});
+  const video = await Videos.findOne({ videoId });
 
-  if(!video)              throw new ApiError(400, "Video not Found!"); 
+  if (!video) throw new ApiError(400, "Video not Found!");
 
-  if(slug !== video.slug){
-      return res.redirect(301, `/api/v1/video/${video.videoId}/${video.slug}`);
+  if (slug !== video.slug) {
+    return res.redirect(301, `/api/v1/video/${video.videoId}/${video.slug}`);
   }
 
-  return res.status(200).json(new ApiResponse(200, "Successfully get video", video));
-})
+  // upgrade views in future
 
-// const editVideo = AsyncHandler(async(req, res) => {
+  const updatedVideo = await Videos.findByIdAndUpdate(
+    { videoId },
+    { $inc: { views: 1 } },
+    { new: true }
+  );
 
-//   if (!req.user?._id)     throw new ApiError(400, "Unauthorized");
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Successfully get video", updatedVideo));
+});
 
-//   const { title, description, isPublised } = req.body;
+const updateVideo = AsyncHandler(async (req, res) => {
+  const { videoId } = req.params;
 
-//   const localThumbnailPath = req.file?.path;
+  if (!req.user?._id) throw new ApiError(400, "Unauthorized");
 
-//   if(!localThumbnailPath)         throw new ApiError("Thumbnail is required!");
+  const { title, description, isPublised } = req.body;
 
+  if (!title || !description)
+    throw new ApiError(400, "title and description is required!");
 
-// })
+  const localThumbnailPath = req.file?.path;
 
-export { uploadVideo, getVideo };
+  if (!localThumbnailPath) throw new ApiError("Thumbnail is required!");
+
+  const video = await Videos.findOne({ videoId });
+
+  if (!video) throw new ApiError(400, "Video not Found!");
+
+  const thumbnail = await uploadFileOnCloudinary(
+    localThumbnailPath,
+    "image",
+    "thumbnails"
+  );
+
+  deleteFileFromLocal(localThumbnailPath);
+
+  const result = await cloudinary.uploader.destroy(video.thumbnailId);
+
+  if (result === "ok")
+    console.log("previous thumbnail deleted from cloudinary");
+
+  const updatedVideo = await Videos.findByIdAndUpdate(
+    { videoId },
+    {
+      $set: {
+        thumbnail: thumbnail.secure_url,
+        thumbnailId: thumbnail.public_id,
+        title,
+        description,
+        isPublised,
+      },
+    },
+    { new: true }
+  );
+
+  res
+    .status(200)
+    .json(
+      new ApiResponse(200, "Video details updated successfully", updatedVideo)
+    );
+});
+
+const deleteVideo = AsyncHandler(async (req, res) => {
+  const { videoId } = req.params;
+
+  if (!req.user?._id) throw new ApiError(400, "Unauthorized");
+
+  const video = await Videos.findOne({ videoId });
+  
+  await cloudinary.uploader.destroy(video.thumbnailId);
+
+  await cloudinary.uploader.destroy(video.videoId, {
+    resource_type: "video",
+  });
+
+  await Videos.deleteOne({ videoId });
+
+  res.status(200).json(new ApiResponse(200, "Video deleted successfully"));
+});
+
+export { uploadVideo, getVideo, updateVideo, deleteVideo };
