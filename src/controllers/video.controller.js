@@ -1,5 +1,6 @@
 import { Users } from "../models/users.model.js";
 import { Videos } from "../models/videos.model.js";
+import { Views } from "../models/views.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { AsyncHandler } from "../utils/AsyncHandler.js";
@@ -35,8 +36,10 @@ const uploadVideo = AsyncHandler(async (req, res) => {
 
   // console.log(req.files);
 
-  if (!localVideoFilePath) throw new ApiError(400, "Videofile local path not found!");
-  if (!localThumbnailPath) throw new ApiError(400, "Thumbnail local path not found!");
+  if (!localVideoFilePath)
+    throw new ApiError(400, "Videofile local path not found!");
+  if (!localThumbnailPath)
+    throw new ApiError(400, "Thumbnail local path not found!");
 
   const VideoFile = await uploadFileOnCloudinary(
     localVideoFilePath,
@@ -86,9 +89,9 @@ const getVideo = AsyncHandler(async (req, res) => {
 
   const { videoId, slug } = req.params;
 
-  if (!videoId?.trim())    throw new ApiError(400, "VideoId not Found!");
+  if (!videoId?.trim()) throw new ApiError(400, "VideoId not Found!");
 
-  const video = await Videos.findById( videoId );
+  const video = await Videos.findById(videoId);
 
   if (!video) throw new ApiError(400, "Video not Found!");
 
@@ -96,23 +99,55 @@ const getVideo = AsyncHandler(async (req, res) => {
     return res.redirect(301, `/api/v1/video/${video._id}/${video.slug}`);
   }
 
-  await Videos.findByIdAndUpdate(
-    video._id,
-    { $inc: { views: 1 } },
-    { new: true }
-  );
+  const view = Views.findOne({
+    video: video._id,
+    user: req.user._id,
+  });
+
+  if (!view) {
+    
+    await Views.create({
+      video: video._id,
+      user: req.user._id,
+    })
+
+    await Videos.findByIdAndUpdate(
+      video._id,
+      { $inc: { views: 1 } },
+      { new: true }
+    );
+  }
 
   await Users.findByIdAndUpdate(
     req.user._id,
-    { 
-      $push: { watchHistory: video._id},
-    },
-    {new: true}
+    [
+      {
+        $set: {
+          watchHistory: {
+            $slice: [
+              {
+                $concatArrays: [
+                  [ video._id ],
+                  {
+                    $filter: {
+                      input: "watchHistory",
+                      cond: { $ne: ["$$this", video._id] }
+                    }
+                  }
+                ]
+              },
+              50
+            ]
+          }
+        }
+      }
+    ],
+    { new: true }
   );
 
   const userVideo = await Videos.aggregate([
     {
-      $match: { _id : video._id }
+      $match: { _id: video._id },
     },
     {
       $lookup: {
@@ -124,16 +159,16 @@ const getVideo = AsyncHandler(async (req, res) => {
           {
             $project: {
               profileimage: 1,
-              username: 1
-            }
+              username: 1,
+            },
           },
-        ]
-      }
+        ],
+      },
     },
     {
       $addFields: {
-        owner: { $arrayElemAt: ["$owner", 0] }
-      }
+        owner: { $arrayElemAt: ["$owner", 0] },
+      },
     },
     {
       $project: {
@@ -142,9 +177,9 @@ const getVideo = AsyncHandler(async (req, res) => {
         title: 1,
         duration: 1,
         views: 1,
-        owner: 1
-      }
-    }
+        owner: 1,
+      },
+    },
   ]);
 
   return res
@@ -153,7 +188,7 @@ const getVideo = AsyncHandler(async (req, res) => {
 });
 
 const getAllVideos = AsyncHandler(async (req, res) => {
-  if(!req.user)        throw new ApiError(400, "Unauthorize");
+  if (!req.user) throw new ApiError(400, "Unauthorize");
 
   const videos = await Videos.aggregate([
     {
@@ -167,15 +202,15 @@ const getAllVideos = AsyncHandler(async (req, res) => {
             $project: {
               profileimage: 1,
               username: 1,
-            }
-          }
-        ] 
-      }
+            },
+          },
+        ],
+      },
     },
     {
       $addFields: {
-        owner: { $arrayElemAt: ["$owner", 0] }
-      }
+        owner: { $arrayElemAt: ["$owner", 0] },
+      },
     },
     {
       $project: {
@@ -185,22 +220,24 @@ const getAllVideos = AsyncHandler(async (req, res) => {
         title: 1,
         duration: 1,
         views: 1,
-        owner: 1
-      }
-    }
+        owner: 1,
+      },
+    },
   ]);
 
-  res.status(200).json(new ApiResponse(200, "Successfully fetch all videos", videos));
-})
+  res
+    .status(200)
+    .json(new ApiResponse(200, "Successfully fetch all videos", videos));
+});
 
 const updateVideo = AsyncHandler(async (req, res) => {
   const { videoId } = req.params;
 
-  if(!videoId)   throw new ApiError(400, "videoId not found!");
+  if (!videoId) throw new ApiError(400, "videoId not found!");
   if (!req.user) throw new ApiError(400, "Unauthorized");
-  
+
   // console.log(req.headers);
-  
+
   const { title, description, isPublised } = req.body;
 
   if (!title || !description || !isPublised)
@@ -208,9 +245,10 @@ const updateVideo = AsyncHandler(async (req, res) => {
 
   const localThumbnailPath = req.file?.path;
 
-  if (!localThumbnailPath) throw new ApiError("Local Thumbnail path not found!");
+  if (!localThumbnailPath)
+    throw new ApiError("Local Thumbnail path not found!");
 
-  const video = await Videos.findById( videoId );
+  const video = await Videos.findById(videoId);
 
   if (!video) throw new ApiError(400, "Video not Found!");
 
@@ -223,7 +261,7 @@ const updateVideo = AsyncHandler(async (req, res) => {
   deleteFileFromLocal(localThumbnailPath);
 
   const result = await cloudinary.uploader.destroy(video.thumbnailId);
-  
+
   if (result.result === "ok")
     console.log("previous thumbnail deleted from cloudinary");
 
@@ -253,10 +291,10 @@ const deleteVideo = AsyncHandler(async (req, res) => {
 
   if (!req.user) throw new ApiError(400, "Unauthorized");
 
-  const video = await Videos.findById( videoId );
+  const video = await Videos.findById(videoId);
 
   if (!video) throw new ApiError(400, "Video not Found!");
-  
+
   const thumbnailResult = await cloudinary.uploader.destroy(video.thumbnailId);
 
   const videoResult = await cloudinary.uploader.destroy(video.videofileId, {
@@ -267,7 +305,7 @@ const deleteVideo = AsyncHandler(async (req, res) => {
 
   // if(videoResult == "ok")           console.log("video deleted from cloudinary");
 
-  await Videos.findByIdAndDelete( videoId );
+  await Videos.findByIdAndDelete(videoId);
 
   res.status(200).json(new ApiResponse(200, "Video deleted successfully"));
 });
