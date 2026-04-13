@@ -33,7 +33,6 @@ const videoSchema = new Schema(
       // SEO slug
       type: String,
       unique: true,
-      index: true,
     },
     views: {
       type: Number,
@@ -52,6 +51,11 @@ const videoSchema = new Schema(
     timestamps: true,
   }
 );
+
+videoSchema.index({
+  createdAt: 1,
+  slug: 1
+});
 
 async function slugMiddleware() {
   if (this.isModified && this.isModified("title")) {

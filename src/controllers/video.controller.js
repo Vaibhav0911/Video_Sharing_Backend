@@ -105,11 +105,10 @@ const getVideo = AsyncHandler(async (req, res) => {
   });
 
   if (!view) {
-    
     await Views.create({
       video: video._id,
       user: req.user._id,
-    })
+    });
 
     await Videos.findByIdAndUpdate(
       video._id,
@@ -127,20 +126,20 @@ const getVideo = AsyncHandler(async (req, res) => {
             $slice: [
               {
                 $concatArrays: [
-                  [ video._id ],
+                  [video._id],
                   {
                     $filter: {
                       input: "watchHistory",
-                      cond: { $ne: ["$$this", video._id] }
-                    }
-                  }
-                ]
+                      cond: { $ne: ["$$this", video._id] },
+                    },
+                  },
+                ],
               },
-              50
-            ]
-          }
-        }
-      }
+              50,
+            ],
+          },
+        },
+      },
     ],
     { new: true }
   );
@@ -188,46 +187,79 @@ const getVideo = AsyncHandler(async (req, res) => {
 });
 
 const getAllVideos = AsyncHandler(async (req, res) => {
-  if (!req.user) throw new ApiError(400, "Unauthorize");
+  if (!req.user) throw new ApiError(401, "Unauthorize");
 
-  const videos = await Videos.aggregate([
+  const page = Math.max(Number(req.query.page) || 1, 1);
+  const limit = Math.max(Number(req.query.limit) || 10, 1);
+  const skip = (page - 1) * limit;
+
+  const result = await Videos.aggregate([
     {
-      $lookup: {
-        from: "users",
-        localField: "owner",
-        foreignField: "_id",
-        as: "owner",
-        pipeline: [
+      $match: { isPublised: true },
+    },
+    {
+      $sort: { createdAt: -1, _id: -1 },
+    },
+    {
+      $facet: {
+        totalCount: [
+          { $count: "count" },
+        ],
+        videos: [
+          { $skip: skip },
+          { $limit: limit },
+          {
+            $lookup: {
+              from: "users",
+              localField: "owner",
+              foreignField: "_id",
+              as: "owner",
+              pipeline: [
+                {
+                  $project: {
+                    profileimage: 1,
+                    username: 1,
+                  },
+                },
+              ],
+            },
+          },
+          {
+            $addFields: {
+              owner: { $arrayElemAt: ["$owner", 0] },
+            },
+          },
           {
             $project: {
-              profileimage: 1,
-              username: 1,
+              thumbnail: 1,
+              videofile: 1,
+              videoId: 1,
+              title: 1,
+              duration: 1,
+              views: 1,
+              owner: 1,
             },
           },
         ],
       },
     },
-    {
-      $addFields: {
-        owner: { $arrayElemAt: ["$owner", 0] },
-      },
-    },
-    {
-      $project: {
-        thumbnail: 1,
-        videofile: 1,
-        videoId: 1,
-        title: 1,
-        duration: 1,
-        views: 1,
-        owner: 1,
-      },
-    },
   ]);
+
+  const totalVideos = result[0].totalCount[0]?.count || 0;
+  const videos = result[0].videos;
+  const totalPages = Math.ceil(totalVideos / limit);
 
   res
     .status(200)
-    .json(new ApiResponse(200, "Successfully fetch all videos", videos));
+    .json(new ApiResponse(200, "Successfully fetch all videos", {
+      page,
+      limit,
+      totalVideos,
+      totalPages,
+      hasNextPage: page < totalPages,
+      hasPreviousPage: page > 1,
+      videos
+    }));
 });
 
 const updateVideo = AsyncHandler(async (req, res) => {

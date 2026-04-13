@@ -5,7 +5,6 @@ const commentSchema = new Schema(
        video: {
         type: Schema.Types.ObjectId,
         ref: "Videos",
-        index: true
        },
        content: {
         type: String,
@@ -17,5 +16,9 @@ const commentSchema = new Schema(
        }
     }, {timestamps: true}
 );
+
+commentSchema.index({
+    video: 1
+})
 
 export const Comments = mongoose.model("Comments", commentSchema);

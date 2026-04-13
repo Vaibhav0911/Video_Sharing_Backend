@@ -5,15 +5,18 @@ const subscriptionSchema = new Schema(
     subscriber: {
       type: Schema.Types.ObjectId,
       ref: "Users",
-      index: true
     },
     channel: {
       type: Schema.Types.ObjectId,
       ref: "Users",
-      index: true
     },
   },
   { timestamps: true }
 );
+
+subscriptionSchema.index({
+  subscriber: 1,
+  channel: 1,
+}, {unique: true})
 
 export const Subscriptions = mongoose.model("Subscriptions", subscriptionSchema);
