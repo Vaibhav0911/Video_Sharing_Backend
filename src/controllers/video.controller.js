@@ -28,8 +28,8 @@ const uploadVideo = AsyncHandler(async (req, res) => {
 
   const { title, description, isPublised } = req.body;
 
-  if (!title || !description)
-    throw new ApiError(400, "title and description is required!");
+  if (!title || !description || !isPublised)
+    throw new ApiError(400, "title, description and isPublised is required!");
 
   const localVideoFilePath = req.files?.videofile?.[0]?.path || "";
   const localThumbnailPath = req.files?.thumbnail?.[0]?.path || "";
@@ -202,9 +202,7 @@ const getAllVideos = AsyncHandler(async (req, res) => {
     },
     {
       $facet: {
-        totalCount: [
-          { $count: "count" },
-        ],
+        totalCount: [{ $count: "count" }],
         videos: [
           { $skip: skip },
           { $limit: limit },
@@ -249,17 +247,17 @@ const getAllVideos = AsyncHandler(async (req, res) => {
   const videos = result[0].videos;
   const totalPages = Math.ceil(totalVideos / limit);
 
-  res
-    .status(200)
-    .json(new ApiResponse(200, "Successfully fetch all videos", {
+  res.status(200).json(
+    new ApiResponse(200, "Successfully fetch all videos", {
       page,
       limit,
       totalVideos,
       totalPages,
       hasNextPage: page < totalPages,
       hasPreviousPage: page > 1,
-      videos
-    }));
+      videos,
+    })
+  );
 });
 
 const updateVideo = AsyncHandler(async (req, res) => {
@@ -275,34 +273,33 @@ const updateVideo = AsyncHandler(async (req, res) => {
   if (!title || !description || !isPublised)
     throw new ApiError(400, "title, description, isPublised field not found!");
 
-  const localThumbnailPath = req.file?.path;
-
-  if (!localThumbnailPath)
-    throw new ApiError("Local Thumbnail path not found!");
-
   const video = await Videos.findById(videoId);
 
   if (!video) throw new ApiError(400, "Video not Found!");
 
-  const thumbnail = await uploadFileOnCloudinary(
-    localThumbnailPath,
-    "image",
-    "thumbnails"
-  );
+  const localThumbnailPath = req.file?.path;
+  let thumbnail;
 
-  deleteFileFromLocal(localThumbnailPath);
+  if (localThumbnailPath) {
+    thumbnail = await uploadFileOnCloudinary(
+      localThumbnailPath,
+      "image",
+      "thumbnails"
+    );
+    deleteFileFromLocal(localThumbnailPath);
 
-  const result = await cloudinary.uploader.destroy(video.thumbnailId);
+    const result = await cloudinary.uploader.destroy(video.thumbnailId);
 
-  if (result.result === "ok")
-    console.log("previous thumbnail deleted from cloudinary");
+    if (result.result === "ok")
+      console.log("previous thumbnail deleted from cloudinary");
+  }
 
   const updatedVideo = await Videos.findByIdAndUpdate(
     video._id,
     {
       $set: {
-        thumbnail: thumbnail.secure_url,
-        thumbnailId: thumbnail.public_id,
+        thumbnail: thumbnail?.secure_url || video.thumbnail,
+        thumbnailId: thumbnail?.public_id || video.thumbnailId,
         title,
         description,
         isPublised,
