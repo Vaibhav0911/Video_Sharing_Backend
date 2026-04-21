@@ -4,12 +4,12 @@ import { addComment, deleteComment, editComment, getAllComment } from "../contro
 
 const router = Router();
 
-router.route("/video/:videoId").post(
+router.route("/videos/:videoId").post(
     jwtverify,
     addComment
 )
 
-router.route("/video/:videoId").get(
+router.route("/videos/:videoId").get(
     jwtverify,
     getAllComment
 )

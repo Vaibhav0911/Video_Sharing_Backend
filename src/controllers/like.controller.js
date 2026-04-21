@@ -5,9 +5,9 @@ import { Likes } from "../models/likes.model.js";
 import mongoose from "mongoose";
 
 const allowedTypes = {
-    video:   "Videos",
-    comment: "Comments",
-    tweet:   "Tweets"
+    videos:   "Videos",
+    comments: "Comments",
+    tweets:   "Tweets"
 };
 
 const toggleLike = AsyncHandler(async (req, res) => {

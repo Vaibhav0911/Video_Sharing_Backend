@@ -18,7 +18,7 @@ router.route("/register").post(
   userRegister
 );
 
-router.route("/login").post(userLogin);
+router.route("/login").post(Upload.none() , userLogin);
 
 router.route("/refresh-access-token").post(refreshAccessToken);
 

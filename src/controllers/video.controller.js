@@ -85,7 +85,7 @@ const uploadVideo = AsyncHandler(async (req, res) => {
 });
 
 const getVideo = AsyncHandler(async (req, res) => {
-  if (!req.user) throw new ApiError(400, "Unauthorized");
+  // if (!req.user) throw new ApiError(400, "Unauthorized");
 
   const { videoId, slug } = req.params;
 
@@ -99,50 +99,53 @@ const getVideo = AsyncHandler(async (req, res) => {
     return res.redirect(301, `/api/v1/video/${video._id}/${video.slug}`);
   }
 
-  const view = Views.findOne({
-    video: video._id,
-    user: req.user._id,
-  });
+  // const view = Views.findOne({
+  //   video: video._id,
+  //   user: req.user._id,
+  // });
 
-  if (!view) {
-    await Views.create({
-      video: video._id,
-      user: req.user._id,
-    });
+  // if (!view) {
+  //   await Views.create({
+  //     video: video._id,
+  //     user: req.user._id,
+  //   });
 
-    await Videos.findByIdAndUpdate(
-      video._id,
-      { $inc: { views: 1 } },
-      { new: true }
-    );
-  }
+  //   await Videos.findByIdAndUpdate(
+  //     video._id,
+  //     { $inc: { views: 1 } },
+  //     { new: true }
+  //   );
+  // }
 
-  await Users.findByIdAndUpdate(
-    req.user._id,
-    [
-      {
-        $set: {
-          watchHistory: {
-            $slice: [
-              {
-                $concatArrays: [
-                  [video._id],
-                  {
-                    $filter: {
-                      input: "watchHistory",
-                      cond: { $ne: ["$$this", video._id] },
-                    },
-                  },
-                ],
-              },
-              50,
-            ],
-          },
-        },
-      },
-    ],
-    { new: true }
-  );
+  // await Users.findByIdAndUpdate(
+  //   req.user._id,
+  //   [
+  //     {
+  //       $set: {
+  //         watchHistory: {
+  //           $slice: [
+  //             {
+  //               $concatArrays: [
+  //                 [video._id],
+  //                 {
+  //                   $filter: {
+  //                     input: "$watchHistory",
+  //                     cond: { $ne: ["$$this", video._id] },
+  //                   },
+  //                 },
+  //               ],
+  //             },
+  //             50,
+  //           ],
+  //         },
+  //       },
+  //     },
+  //   ],
+  //   { 
+  //     new: true,
+  //     updatePipeline: true,
+  //   }
+  // );
 
   const userVideo = await Videos.aggregate([
     {
@@ -175,6 +178,8 @@ const getVideo = AsyncHandler(async (req, res) => {
         videofile: 1,
         title: 1,
         duration: 1,
+        description: 1,
+        createdAt: 1,
         views: 1,
         owner: 1,
       },
@@ -187,7 +192,7 @@ const getVideo = AsyncHandler(async (req, res) => {
 });
 
 const getAllVideos = AsyncHandler(async (req, res) => {
-  if (!req.user) throw new ApiError(401, "Unauthorize");
+  // if (!req.user) throw new ApiError(401, "Unauthorize");
 
   const page = Math.max(Number(req.query.page) || 1, 1);
   const limit = Math.max(Number(req.query.limit) || 10, 1);
@@ -231,7 +236,7 @@ const getAllVideos = AsyncHandler(async (req, res) => {
             $project: {
               thumbnail: 1,
               videofile: 1,
-              videoId: 1,
+              slug: 1,
               title: 1,
               duration: 1,
               views: 1,

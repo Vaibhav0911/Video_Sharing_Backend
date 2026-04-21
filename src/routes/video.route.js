@@ -15,12 +15,12 @@ router.route("/").post(
 );
 
 router.route("/:videoId/:slug").get(
-  jwtverify,
+  // jwtverify,
   getVideo
 );
 
 router.route("/").get(
-  jwtverify,
+  // jwtverify,
   getAllVideos
 );
 

@@ -19,11 +19,11 @@ app.use(cookieParser())
 app.use(express.urlencoded({extended: true}))
 
 app.use("/api/v1/auth", Auth);
-app.use("/api/v1/user", User);
-app.use("/api/v1/video", Video);
-app.use("/api/v1/subscription", Subscription);
-app.use("/api/v1/comment", Comment);
-app.use("/api/v1/like", Like);
+app.use("/api/v1/users", User);
+app.use("/api/v1/videos", Video);
+app.use("/api/v1/subscriptions", Subscription);
+app.use("/api/v1/comments", Comment);
+app.use("/api/v1/likes", Like);
 
 
 export {app};

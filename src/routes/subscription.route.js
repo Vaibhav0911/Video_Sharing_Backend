@@ -6,7 +6,7 @@ import {
 
 const router = Router();
 
-router.route("/user/:username").post(
+router.route("/users/:username").post(
     jwtverify,
     toggleSubscribeChannel
 )
