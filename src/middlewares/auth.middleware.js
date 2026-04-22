@@ -18,7 +18,8 @@ const jwtverify = AsyncHandler(async (req, res, next) => {
     }
     throw new ApiError("400", "Invalid AccessToken");
   }
-
+  
+  
   const user = await Users.findById(decoded.id);
   req.user = user;
   next();

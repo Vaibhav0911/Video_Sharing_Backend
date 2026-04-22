@@ -24,12 +24,12 @@ const deleteImageFromLocal = async (filePath) => {
   }
 };
 
-const getCurrentUser = async () => {
-
+const getCurrentUser = AsyncHandler(async(req, res) => {
+  
   const user = req.user;
-  if(user)      throw new ApiError(401, "Unauthorized!");
-  return user;
-}
+  if(!user)      throw new ApiError(401, "Unauthorized!");
+  res.status(200).json(new ApiResponse(200, "User fetch successfully", user));
+});
 
 const updateProfileImage = AsyncHandler(async (req, res) => {
   

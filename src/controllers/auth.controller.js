@@ -121,7 +121,7 @@ const userLogin = AsyncHandler(async (req, res) => {
     .cookie("refreshToken", refreshToken, options)
     .json(
       new ApiResponse(200, "Successfully login", {
-        loginUser,
+        data: loginUser,
         accessToken,
         refreshToken,
       })
@@ -182,7 +182,7 @@ const refreshAccessToken = AsyncHandler(async (req, res) => {
     .cookie("refreshToken", refreshToken, options)
     .json(
       new ApiResponse(200, "RefreshAccessToken Successfully", {
-        newUser,
+        data: newUser,
         accessToken,
         refreshToken,
       })
