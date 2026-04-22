@@ -7,11 +7,18 @@ import {
   getUserChannelProfile,
   userWatchHistory,
   getUserVideos,
+  getCurrentUser
 } from "../controllers/user.controller.js";
 
 const router = Router();
 
 // secure routes
+
+router.route("/current-user").get(
+  jwtverify,
+  getCurrentUser
+)
+
 router.route("/update-profile-image").patch(
   jwtverify,
   Upload.single("profileimage"),

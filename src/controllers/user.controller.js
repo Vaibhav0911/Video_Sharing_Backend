@@ -24,6 +24,13 @@ const deleteImageFromLocal = async (filePath) => {
   }
 };
 
+const getCurrentUser = async () => {
+
+  const user = req.user;
+  if(user)      throw new ApiError(401, "Unauthorized!");
+  return user;
+}
+
 const updateProfileImage = AsyncHandler(async (req, res) => {
   
   const profileImageLocalPath = req.file?.path;
@@ -253,4 +260,5 @@ export {
   getUserChannelProfile,
   userWatchHistory,
   getUserVideos,
+  getCurrentUser
 };
