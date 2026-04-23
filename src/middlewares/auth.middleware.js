@@ -3,7 +3,7 @@ import { AsyncHandler } from "../utils/AsyncHandler.js";
 import jwt from "jsonwebtoken";
 import { Users } from "../models/users.model.js";
 
-const jwtverify = AsyncHandler(async (req, res, next) => {
+export const jwtverify = AsyncHandler(async (req, res, next) => {
   const accessToken =
     req.cookies?.accessToken ||
     req.header["Authorization"]?.replace("Bearer ", "");
@@ -16,13 +16,14 @@ const jwtverify = AsyncHandler(async (req, res, next) => {
     if (error.name === "TokenExpiredError") {
       throw new ApiError(401, "AccessToken expired");
     }
-    throw new ApiError("400", "Invalid AccessToken");
+    throw new ApiError(400, "Invalid AccessToken");
   }
   
   
-  const user = await Users.findById(decoded.id);
+  const user = await Users.findById(decoded?.id).select(
+      "-password -refreshToken"
+  );
   req.user = user;
   next();
 });
 
-export { jwtverify };

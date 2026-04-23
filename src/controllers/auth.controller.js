@@ -6,9 +6,18 @@ import { Users } from "../models/users.model.js";
 import fs from "fs/promises";
 import jwt from "jsonwebtoken";
 
-const options = {
+const access_options = {
   httpOnly: true,
-  secure: false,
+  secure: false, // true in production (HTTPS)
+  sameSite: "lax",
+  maxAge: 1 * 24 * 60 * 60 * 1000, // 1 days
+};
+
+const refresh_options = {
+  httpOnly: true,
+  secure: false, // true in production (HTTPS)
+  sameSite: "lax",
+  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
 };
 
 const uploadImageOnCloudinary = (filePath) => {
@@ -117,8 +126,8 @@ const userLogin = AsyncHandler(async (req, res) => {
 
   res
     .status(200)
-    .cookie("accessToken", accessToken, options)
-    .cookie("refreshToken", refreshToken, options)
+    .cookie("accessToken", accessToken, access_options)
+    .cookie("refreshToken", refreshToken, refresh_options)
     .json(
       new ApiResponse(200, "Successfully login", {
         data: loginUser,
@@ -141,8 +150,8 @@ const userLogout = AsyncHandler(async (req, res) => {
 
   res
     .status(200)
-    .clearCookie("accessToken", options)
-    .clearCookie("refreshToken", options)
+    .clearCookie("accessToken", access_options)
+    .clearCookie("refreshToken", refresh_options)
     .json(new ApiResponse(200, "Successfully logged out", logoutUser));
 });
 
@@ -178,8 +187,8 @@ const refreshAccessToken = AsyncHandler(async (req, res) => {
 
   res
     .status(200)
-    .cookie("accessToken", accessToken, options)
-    .cookie("refreshToken", refreshToken, options)
+    .cookie("accessToken", accessToken, access_options)
+    .cookie("refreshToken", refreshToken, refresh_options)
     .json(
       new ApiResponse(200, "RefreshAccessToken Successfully", {
         data: newUser,

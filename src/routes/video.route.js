@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { jwtverify } from "../middlewares/auth.middleware.js";
+import { optionalAuth } from "../middlewares/optionalAuth.middleware.js";
 import { Upload } from "../middlewares/upload.middleware.js";
 import { uploadVideo, getVideo, updateVideo, deleteVideo, getAllVideos } from "../controllers/video.controller.js";
 
@@ -15,12 +16,12 @@ router.route("/").post(
 );
 
 router.route("/:videoId/:slug").get(
-  // jwtverify,
+  optionalAuth,
   getVideo
 );
 
 router.route("/").get(
-  // jwtverify,
+  optionalAuth,
   getAllVideos
 );
 
