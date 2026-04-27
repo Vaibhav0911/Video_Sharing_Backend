@@ -229,6 +229,7 @@ const getAllVideos = AsyncHandler(async (req, res) => {
               duration: 1,
               views: 1,
               owner: 1,
+              createdAt: 1,
             },
           },
         ],
@@ -259,8 +260,6 @@ const updateVideo = AsyncHandler(async (req, res) => {
   if (!videoId) throw new ApiError(400, "videoId not found!");
   if (!req.user) throw new ApiError(400, "Unauthorized");
 
-  // console.log(req.headers);
-
   const { title, description, isPublised } = req.body;
 
   if (!title || !description || !isPublised)
@@ -283,8 +282,8 @@ const updateVideo = AsyncHandler(async (req, res) => {
 
     const result = await cloudinary.uploader.destroy(video.thumbnailId);
 
-    if (result.result === "ok")
-      console.log("previous thumbnail deleted from cloudinary");
+    // if (result.result === "ok")
+    //   console.log("previous thumbnail deleted from cloudinary");
   }
 
   const updatedVideo = await Videos.findByIdAndUpdate(
