@@ -7,6 +7,7 @@ import Video from "./routes/video.route.js";
 import Subscription from "./routes/subscription.route.js";
 import Comment from "./routes/comment.route.js";
 import Like from "./routes/like.route.js";
+import Playlist from "./routes/playlist.route.js";
 
 const app = express();
 
@@ -24,6 +25,7 @@ app.use("/api/v1/videos", Video);
 app.use("/api/v1/subscriptions", Subscription);
 app.use("/api/v1/comments", Comment);
 app.use("/api/v1/likes", Like);
+app.use("/api/v1/playlists", Playlist)
 
 
 export {app};
