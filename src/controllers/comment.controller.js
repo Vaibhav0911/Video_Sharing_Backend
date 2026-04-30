@@ -83,7 +83,7 @@ const getAllComment = AsyncHandler(async (req, res) => {
   ]);
 
   if (comment.length === 0) {
-    res
+    return res
       .status(200)
       .json(new ApiResponse(200, "Fetch comments successfully", comment));
   }
